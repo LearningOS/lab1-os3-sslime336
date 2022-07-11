@@ -21,10 +21,15 @@ mod process;
 
 use fs::*;
 use process::*;
+// use crate::config::MAX_SYSCALL_NUM;
 
 /// handle syscall exception with `syscall_id` and other arguments
 pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
-    // LAB1: You may need to update syscall info here.
+    // TODO: You may need to update syscall info here.
+    // pub static SYSCALL_TIMES: [u32; MAX_SYSCALL_NUM] = [0; MAX_SYSCALL_NUM];
+    use super::task as manager;
+    manager::inc_syscall_num(syscall_id);
+
     match syscall_id {
         SYSCALL_WRITE => sys_write(args[0], args[1] as *const u8, args[2]),
         SYSCALL_EXIT => sys_exit(args[0] as i32),

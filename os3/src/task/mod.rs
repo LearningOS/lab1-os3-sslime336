@@ -54,10 +54,13 @@ lazy_static! {
         let mut tasks = [TaskControlBlock {
             task_cx: TaskContext::zero_init(),
             task_status: TaskStatus::UnInit,
+            started_time: 0, // birth time
+            syscall_times: [0; MAX_SYSCALL_NUM],
         }; MAX_APP_NUM];
         for (i, t) in tasks.iter_mut().enumerate().take(num_app) {
             t.task_cx = TaskContext::goto_restore(init_app_cx(i));
             t.task_status = TaskStatus::Ready;
+            t.started_time = super::timer::get_time_ms();
         }
         TaskManager {
             num_app,
@@ -136,7 +139,12 @@ impl TaskManager {
         }
     }
 
-    // LAB1: Try to implement your function to update or get task info!
+    // TODO: Try to implement your function to update or get task info!
+
+    /// Return `inner` from TaskManager.
+    fn inner(&self) ->  core::cell::RefMut<'_, TaskManagerInner> {
+        self.inner.exclusive_access()
+    }
 }
 
 /// Run the first task in task list.
@@ -172,5 +180,34 @@ pub fn exit_current_and_run_next() {
     run_next_task();
 }
 
-// LAB1: Public functions implemented here provide interfaces.
+// TODO: Public functions implemented here provide interfaces.
 // You may use TASK_MANAGER member functions to handle requests.
+fn get_current_id() -> usize {
+    TASK_MANAGER.inner().current_task
+}
+
+/// Get the current task's status.
+pub fn get_current_status() -> TaskStatus {
+    let cur_id = get_current_id();
+
+    TASK_MANAGER.inner().tasks[cur_id].task_status
+}
+
+/// Return how long had the task been running.
+pub fn get_current_lived_time() -> usize {
+    let cur_id = get_current_id();
+
+    let brith_time = TASK_MANAGER.inner().tasks[cur_id].started_time;
+
+    super::timer::get_time_ms() - brith_time
+}
+
+pub fn inc_syscall_num(syscall_id: usize) {
+    let cur_id = get_current_id();
+    TASK_MANAGER.inner().tasks[cur_id].syscall_times[syscall_id] += 1;
+}
+
+pub fn get_syscall_times() -> [u32; MAX_SYSCALL_NUM] {
+    let cur_id = get_current_id();
+    TASK_MANAGER.inner().tasks[cur_id].syscall_times
+}
