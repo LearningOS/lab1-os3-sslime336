@@ -21,15 +21,11 @@ CHAPTER ?= 3
 TEST ?= $(CHAPTER)
 BASE ?= 1
 
-build: env $(KERNEL_BIN)
+build: $(KERNEL_BIN)
 
 $(KERNEL_BIN): kernel
 	@$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $@
 	@$(OBJDUMP) $(KERNEL_ELF) -S > $(KERNEL_ELF).asm
-
-env:
-	(rustup target list | grep "riscv64gc-unknown-none-elf (installed)") || rustup target add $(TARGET)
-	cargo install cargo-binutils
 
 $(KERNEL_BIN): kernel
 	@$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $@
